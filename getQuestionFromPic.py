@@ -15,46 +15,51 @@ sys.setdefaultencoding('utf-8')
 def getQuestion(imagePath):
     im  = Image.open(imagePath)
     newImage = im.crop((120,0,293,30))
-    newname =  imagePath +".jpg"
-    newImage.save(newname)
+    #newname =  imagePath +".jpg"
+    #newImage.save(newname)
     im.close()
-    return  pytesseract.image_to_string(newImage , lang="chi_sim", config = " -psm 7") , newname
+    binImage = picPreDo(newImage)
+    return  pytesseract.image_to_string(binImage, lang="chi_sim", config = " -psm 7") 
+
+def picPreDo(imageHandler):
+    Lim = imageHandler.convert("L")
+    threshold = 190
+    table = [] 
+    for i in range(256):
+        if i < threshold :
+            table.append(0)
+        else :
+            table.append(1)
+    bim  = Lim.point(table,'1')
+    #bim.save("xxx.jpg" )
+    return bim 
+    
+    
 
 def getResultFromDir(dirPath):
     testA = []
     failedNum  = 0 
-    testB = []
     fp = open("resultOne.txt", "w")
-    wp  = open("resultTwo.txt", "w")
     for root,dirs, files in os.walk(dirPath):
-       for filename in files :
-           imagePath = os.path.join(root, filename)
-           result = getQuestion(imagePath)
-           if result :
-               if result[0] not in testA :
-
-                   testA.append(result[0])
-                   fp.write(result[0] + " \r\n")
-                   cmd  = "tesseract  " + result[1] + " test -l chi_sim "
-                   os.system(cmd)
-                   zp = open("test.txt","r")
-                   question = zp.read().strip()
-                   if question not in testB :
-                       wp.write(question + "\r\n")
-                       os.remove("test.txt")
-                   zp.close()
-                   os.remove(result[1])
-
-                   
-               else :
-                   pass
-           else :
-               failedNum = failedNum  + 1
-
-    print failedNum 
-     
+        for filename in files :
+            imagePath = os.path.join(root, filename)
+            try :
+                result = getQuestion(imagePath)
+                print result , "xxxx"
+                if result :
+                    if result not in testA :
+                        testA.append(result)
+                        fp.write(result + " \r\n")
+          
+                    else :
+                        pass
+                else :
+                    failedNum = failedNum  + 1
+            except Exception as e:
+                print str(e)
+    print failedNum    
     fp.close()
-    wp.close()
+    
 
 
 
